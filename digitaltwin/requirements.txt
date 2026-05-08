@@ -1,0 +1,4 @@
+matplotlib>=3.7
+mitsuba>=3.5
+mitransient>=0.6
+numpy>=1.24

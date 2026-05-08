@@ -1,0 +1,31 @@
+# Raw NLOS captures and pre-extracted joblib datasets are distributed
+# separately (see README); they are not committed to the github repo.
+denali-data/
+benchmark/saved_dataset/
+benchmark/saved_dataset_*/
+denali-dataset-*.tar.gz
+*.tar.gz
+*.tgz
+*.tar
+*.zip
+
+# Per-package output destinations (auto-created on first run).
+digitaltwin/outputs/
+capture/logs/
+
+# Python build artifacts.
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# OS / editor noise.
+.DS_Store
+.idea/
+.vscode/
+*.swp
