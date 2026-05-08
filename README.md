@@ -4,6 +4,12 @@
   <img src="assets/images/teaser.png" alt="Teaser" width="900">
 </p>
 
+<p align="center">
+  <a href="https://nikhilbehari.github.io/denali/"><b>Project page</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://forms.gle/4M3RQgeNWxPRSUkd8"><b>Dataset download</b></a>
+</p>
+
 > Behari, N., Rivero, D., Apostolides, L., Ghosh, S., Liang, P. P., & Raskar, R.
 > *DENALI: A Dataset Enabling Non-Line-of-Sight Spatial Reasoning with Low-Cost
 > LiDARs.* CVPR 2026 (Highlight).
