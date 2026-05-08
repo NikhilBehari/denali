@@ -16,19 +16,22 @@ a tracking RGB camera. This repository ships the captured data alongside
 end-to-end code for capture, training, evaluation, real-time inference,
 and a Mitsuba 3 digital-twin renderer.
 
-## Capture setup and dataset objects
+## Capture setup
 
-<p align="center">
-  <img src="assets/images/capture_setup.png"   alt="Capture setup"   width="440">
-  <img src="assets/images/dataset_objects.png" alt="Dataset objects" width="440">
-</p>
+![Capture setup](assets/images/capture_setup.png)
 
 A low-cost SPAD LiDAR illuminates a relay wall; the third-bounce return
 in each pixel histogram (the small bumps after the direct-return peak)
 carries enough signal for compact 1D-CNNs to localize, classify, and
-size-classify the hidden object. The dataset spans 30 retroreflective
-shapes (10 letters, 10 numbers, 10 shapes) at two sizes (4 in. / 8 in.)
-with bundled ground-truth meshes for digital-twin rendering.
+size-classify the hidden object.
+
+## Dataset objects
+
+![Dataset objects](assets/images/dataset_objects.png)
+
+The dataset spans 30 retroreflective shapes (10 letters, 10 numbers,
+10 shapes) at two sizes (4 in. / 8 in.) with bundled ground-truth
+meshes for digital-twin rendering.
 
 ## Layout
 
