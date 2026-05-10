@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<meta charset="utf-8">
+<html>
 <head>
-    <meta charset="utf-8">
-    <title>DENALI: Non-Line-of-Sight Spatial Reasoning with Low-Cost LiDARs</title>
+<title>DENALI: Non-Line-of-Sight Spatial Reasoning with Low-Cost LiDARs</title>
     <meta property="og:title" content="DENALI: Non-Line-of-Sight Spatial Reasoning with Low-Cost LiDARs">
     <meta property="og:description" content="A large-scale real-world dataset of full LiDAR histograms for data-driven NLOS perception. CVPR 2026 (Highlight).">
     <meta property="og:image" content="images/teaser.png">
@@ -11,34 +11,32 @@
     <meta name="twitter:description" content="A large-scale real-world dataset of full LiDAR histograms for data-driven NLOS perception. CVPR 2026 (Highlight).">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href='https://fonts.googleapis.com/css?family=Titillium+Web:400,600,400italic,600italic,300,300italic' rel='stylesheet' type='text/css'>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="container">
-
     <div class="paper-title">
-        <h1 class="title-row">
-            <img src="images/logo.png" alt="DENALI logo">
-            <span class="denali-mark">DENALI</span>
-        </h1>
-        <h2 class="subtitle">A Dataset Enabling Non-Line-of-Sight Spatial Reasoning with Low-Cost LiDARs</h2>
-        <h3 class="venue">CVPR 2026 (Highlight)</h3>
+        <h1 class="title-with-logo"><img src="images/logo.png" alt="DENALI logo"><span class="denali">DENALI</span></h1>
+        <h2 style="margin-top: -16px; margin-bottom: 12px">A Dataset Enabling Non-Line-of-Sight Spatial Reasoning with Low-Cost LiDARs</h2>
+        <div style="display: flex; justify-content: center; margin-top: 8px;">
+            <div style="background-color: #4472C4; color: white; padding: 3px 10px; font-size: 13px; border-radius: 5px; text-align: center; font-weight: 400;">CVPR 2026 (Highlight)</div>
+        </div>
     </div>
 
     <div id="authors">
         <div class="author-row">
-            <div class="col-6 text-center"><a href="https://nikhilbehari.github.io" target="_blank">Nikhil<br><span class="lastname">Behari<sup>1</sup></span></a></div>
-            <div class="col-6 text-center">Diego<br><span class="lastname">Rivero<sup>1</sup></span></div>
-            <div class="col-6 text-center">Luke<br><span class="lastname">Apostolides<sup>1</sup></span></div>
-            <div class="col-6 text-center">Suman<br><span class="lastname">Ghosh<sup>2,1</sup></span></div>
-            <div class="col-6 text-center"><a href="https://pliang279.github.io" target="_blank">Paul Pu<br><span class="lastname">Liang<sup>1</sup></span></a></div>
-            <div class="col-6 text-center"><a href="https://www.media.mit.edu/people/raskar/overview/" target="_blank">Ramesh<br><span class="lastname">Raskar<sup>1</sup></span></a></div>
+            <div class="col-6 text-center"><a href="https://nikhilbehari.github.io" target="_blank">Nikhil<br>Behari<sup>1</sup></a></div>
+            <div class="col-6 text-center">Diego<br>Rivero<sup>1</sup></div>
+            <div class="col-6 text-center">Luke<br>Apostolides<sup>1</sup></div>
+            <div class="col-6 text-center">Suman<br>Ghosh<sup>2,1</sup></div>
+            <div class="col-6 text-center"><a href="https://pliang279.github.io" target="_blank">Paul Pu<br>Liang<sup>1</sup></a></div>
+            <div class="col-6 text-center"><a href="https://www.media.mit.edu/people/raskar/overview/" target="_blank">Ramesh<br>Raskar<sup>1</sup></a></div>
         </div>
-        <div class="affil-row">
-            <div class="text-center">
-                <sup>1</sup>Massachusetts Institute of Technology &nbsp;&nbsp; <sup>2</sup>Technische Universität Berlin
-            </div>
+        <div class="affil-row" style="margin: 16px auto 0; text-align: center;">
+            <span style="display: inline-block; margin: 0 14px;"><sup>1</sup>Massachusetts Institute of Technology</span>
+            <span style="display: inline-block; margin: 0 14px;"><sup>2</sup>Technische Universität Berlin</span>
         </div>
     </div>
 
@@ -124,7 +122,7 @@
             We ship a Dash + Plotly web app that runs the three pretrained inference heads (object
             class, object size, and 2D location) live over the captured 3×3 SPAD histograms. Below:
             walking through 56 gantry locations for object <b>9</b> at 8″ / lights on, then toggling
-            each control:
+            each control.
         </p>
         <figure style="width: 100%;">
             <a href="images/gui_walkthrough.gif">
@@ -155,30 +153,31 @@
     <section id="results">
         <h2>Selected results</h2>
         <hr>
-        <figure style="width: 100%;">
-            <a href="images/spatial_accuracy.png">
-                <img style="width: 100%;" src="images/spatial_accuracy.png" alt="Spatial localization accuracy">
-            </a>
-            <p class="caption_justify">
-                <b>Spatial mapping of NLOS localization accuracy.</b> RMSE (m) over true gantry
-                positions for a 1D CNN, broken down by object size and room lighting. Accuracy
-                improves for larger 8 in. objects nearer the relay wall, and lighting induces
-                distinct error patterns, pointing at residual confounding of object, geometry, and
-                ambient light.
-            </p>
-        </figure>
-
-        <figure style="width: 100%;">
-            <a href="images/per_object_accuracy.png">
-                <img style="width: 100%;" src="images/per_object_accuracy.png" alt="Per-object classification accuracy">
-            </a>
-            <p class="caption_justify">
-                <b>Object classification across shape and size.</b> A 1D CNN trained independently
-                per object scale shows that larger 8 in. objects are consistently easier to classify
-                than 4 in. ones, with confusion concentrated within shape families (digits, letters,
-                shapes).
-            </p>
-        </figure>
+        <div style="display: flex; justify-content: space-between; width: 100%; gap: 16px;">
+            <figure style="width: 50%; text-align: center;">
+                <a href="images/spatial_accuracy.png">
+                    <img style="width: 100%;" src="images/spatial_accuracy.png" alt="Spatial localization accuracy">
+                </a>
+                <p class="caption_justify" style="margin-top: 10px;">
+                    <b>Spatial mapping of NLOS localization accuracy.</b> RMSE (m) over true gantry
+                    positions for a 1D CNN, broken down by object size and room lighting. Accuracy
+                    improves for larger 8 in. objects nearer the relay wall, and lighting induces
+                    distinct error patterns, pointing at residual confounding of object, geometry,
+                    and ambient light.
+                </p>
+            </figure>
+            <figure style="width: 50%; text-align: center;">
+                <a href="images/per_object_accuracy.png">
+                    <img style="width: 100%;" src="images/per_object_accuracy.png" alt="Per-object classification accuracy">
+                </a>
+                <p class="caption_justify" style="margin-top: 10px;">
+                    <b>Object classification across shape and size.</b> A 1D CNN trained independently
+                    per object scale shows that larger 8 in. objects are consistently easier to
+                    classify than 4 in. ones, with confusion concentrated within shape families
+                    (digits, letters, shapes).
+                </p>
+            </figure>
+        </div>
     </section>
 
     <section id="bibtex">
