@@ -85,24 +85,70 @@ def pretty_obj(o: str) -> str:
 # --------------------------------------------------------------------------- #
 # Theme
 # --------------------------------------------------------------------------- #
+# Two named palettes drive both the CSS (via custom properties at runtime) and
+# the Plotly figures (via the palette() helper below). Add new themes by
+# extending PALETTES; everything else picks them up automatically.
 
-BG = "#0e1116"
-PANEL = "#161a22"
-PANEL_LIGHT = "#1e242e"
-ACCENT = "#5cc8ff"
-ACCENT_DIM = "#3a7fa6"
-GT_COLOR = "#6cf28b"
-PRED_COLOR = "#ff6b6b"
-TEXT = "#e6edf3"
-TEXT_DIM = "#8b95a5"
-GRID_COLOR = "#2a313c"
+DEFAULT_THEME = "light"
 
-PLOT_LAYOUT_BASE = dict(
-    paper_bgcolor=PANEL,
-    plot_bgcolor=PANEL,
-    font=dict(color=TEXT_DIM, family="ui-monospace, SF Mono, Menlo, monospace", size=11),
-    margin=dict(l=44, r=14, t=20, b=36),
-)
+PALETTES: dict[str, dict[str, str]] = {
+    "dark": {
+        "bg":           "#0e1116",
+        "panel":        "#161a22",
+        "panel_alt":    "#1e242e",
+        "accent":       "#5cc8ff",
+        "accent_dim":   "#3a7fa6",
+        "gt":           "#6cf28b",
+        "pred":         "#ff6b6b",
+        "text":         "#e6edf3",
+        "text_dim":     "#8b95a5",
+        "grid":         "#2a313c",
+        "fill_accent":  "rgba(92, 200, 255, 0.45)",
+        "info_bg":      "rgba(92, 200, 255, 0.06)",
+        "info_border":  "rgba(92, 200, 255, 0.30)",
+        "legend_bg":    "rgba(30, 36, 46, 0.85)",
+        "scene_img_bg": "#000000",
+        "shadow":       "0 1px 0 rgba(0,0,0,0.30)",
+    },
+    "light": {
+        # Off-white workspace, white panels, deep blue accent, semantic green/red.
+        "bg":           "#f6f7fb",
+        "panel":        "#ffffff",
+        "panel_alt":    "#f1f3f7",
+        "accent":       "#2563eb",
+        "accent_dim":   "#93c5fd",
+        "gt":           "#16a34a",
+        "pred":         "#dc2626",
+        "text":         "#0f172a",
+        "text_dim":     "#64748b",
+        "grid":         "#e2e8f0",
+        "fill_accent":  "rgba(37, 99, 235, 0.18)",
+        "info_bg":      "rgba(37, 99, 235, 0.06)",
+        "info_border":  "rgba(37, 99, 235, 0.25)",
+        "legend_bg":    "rgba(255, 255, 255, 0.92)",
+        "scene_img_bg": "#e2e8f0",
+        "shadow":       "0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(15, 23, 42, 0.04)",
+    },
+}
+
+
+def palette(theme: str | None) -> dict[str, str]:
+    """Resolve a palette dict, falling back to DEFAULT_THEME."""
+    return PALETTES.get(theme or DEFAULT_THEME, PALETTES[DEFAULT_THEME])
+
+
+def plot_layout_base(theme: str | None) -> dict:
+    pal = palette(theme)
+    return dict(
+        paper_bgcolor=pal["panel"],
+        plot_bgcolor=pal["panel"],
+        font=dict(
+            color=pal["text_dim"],
+            family="ui-monospace, SF Mono, Menlo, monospace",
+            size=11,
+        ),
+        margin=dict(l=44, r=14, t=20, b=36),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -210,11 +256,11 @@ def overlay_markers(
 # Plotly figure builders
 # --------------------------------------------------------------------------- #
 
-def fig_histograms(hist: np.ndarray, y_max: float) -> go.Figure:
+def fig_histograms(hist: np.ndarray, y_max: float, theme: str | None = None) -> go.Figure:
     """3x3 grid of bin histograms sharing a y-axis limit."""
+    pal = palette(theme)
     n_bins = hist.shape[-1]
     x = np.arange(n_bins)
-
 
     fig = make_subplots(
         rows=3, cols=3,
@@ -229,8 +275,8 @@ def fig_histograms(hist: np.ndarray, y_max: float) -> go.Figure:
                 go.Scatter(
                     x=x, y=y, mode="lines",
                     fill="tozeroy",
-                    line=dict(color=ACCENT, width=1.0),
-                    fillcolor="rgba(92, 200, 255, 0.45)",
+                    line=dict(color=pal["accent"], width=1.0),
+                    fillcolor=pal["fill_accent"],
                     hovertemplate=(
                         f"cell ({r},{c})<br>bin %{{x}}<br>counts %{{y:,}}<extra></extra>"
                     ),
@@ -243,33 +289,34 @@ def fig_histograms(hist: np.ndarray, y_max: float) -> go.Figure:
                 xref=f"x{(r * 3 + c + 1) if (r * 3 + c + 1) > 1 else ''} domain",
                 yref=f"y{(r * 3 + c + 1) if (r * 3 + c + 1) > 1 else ''} domain",
                 x=0.04, y=0.92, text=f"({r},{c})",
-                showarrow=False, font=dict(color=TEXT_DIM, size=10),
+                showarrow=False, font=dict(color=pal["text_dim"], size=10),
             )
     fig.update_xaxes(
         showgrid=False, zeroline=False, showline=False,
-        tickcolor=GRID_COLOR, tickfont=dict(color=TEXT_DIM, size=9),
+        tickcolor=pal["grid"], tickfont=dict(color=pal["text_dim"], size=9),
         range=[0, n_bins - 1],
     )
     fig.update_yaxes(
-        gridcolor=GRID_COLOR, zeroline=False, showline=False,
-        tickcolor=GRID_COLOR, tickfont=dict(color=TEXT_DIM, size=9),
+        gridcolor=pal["grid"], zeroline=False, showline=False,
+        tickcolor=pal["grid"], tickfont=dict(color=pal["text_dim"], size=9),
         range=[0, y_max],
     )
-    layout = {**PLOT_LAYOUT_BASE,
+    layout = {**plot_layout_base(theme),
               "height": 270,
               "margin": dict(l=42, r=10, t=10, b=20)}
     fig.update_layout(**layout)
     return fig
 
 
-def fig_location(pred) -> go.Figure:
+def fig_location(pred, theme: str | None = None) -> go.Figure:
+    pal = palette(theme)
     fig = go.Figure()
 
     # 100 GT capture grid points (in world meters) as a faded background.
     fig.add_trace(go.Scatter(
         x=_GRID_XY[:, 0], y=_GRID_XY[:, 1],
         mode="markers",
-        marker=dict(color=GRID_COLOR, size=6, line=dict(width=0)),
+        marker=dict(color=pal["grid"], size=6, line=dict(width=0)),
         name="capture grid",
         hoverinfo="skip",
     ))
@@ -277,7 +324,7 @@ def fig_location(pred) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=[pred.gt_xy[0]], y=[pred.gt_xy[1]],
         mode="markers",
-        marker=dict(symbol="circle-open", color=GT_COLOR, size=24,
+        marker=dict(symbol="circle-open", color=pal["gt"], size=24,
                     line=dict(width=2.6)),
         name="ground truth",
     ))
@@ -285,7 +332,7 @@ def fig_location(pred) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=[pred.pred_xy[0]], y=[pred.pred_xy[1]],
         mode="markers",
-        marker=dict(symbol="x-thin", color=PRED_COLOR, size=18, line=dict(width=3)),
+        marker=dict(symbol="x-thin", color=pal["pred"], size=18, line=dict(width=3)),
         name="prediction",
     ))
     # Connector
@@ -293,7 +340,7 @@ def fig_location(pred) -> go.Figure:
         x=[pred.gt_xy[0], pred.pred_xy[0]],
         y=[pred.gt_xy[1], pred.pred_xy[1]],
         mode="lines",
-        line=dict(color=PRED_COLOR, dash="dot", width=1.2),
+        line=dict(color=pal["pred"], dash="dot", width=1.2),
         showlegend=False, hoverinfo="skip",
     ))
 
@@ -303,36 +350,36 @@ def fig_location(pred) -> go.Figure:
     y_lo, y_hi = float(_GRID_XY[:, 1].min()) - pad, float(_GRID_XY[:, 1].max()) + pad
 
     fig.update_xaxes(
-        range=[x_lo, x_hi], gridcolor=GRID_COLOR, zeroline=False,
-        title=dict(text="x  (world m)", font=dict(color=TEXT_DIM, size=11)),
-        tickfont=dict(color=TEXT_DIM, size=9),
+        range=[x_lo, x_hi], gridcolor=pal["grid"], zeroline=False,
+        title=dict(text="x  (world m)", font=dict(color=pal["text_dim"], size=11)),
+        tickfont=dict(color=pal["text_dim"], size=9),
     )
     fig.update_yaxes(
         # World-y points up in the scene image, so y_lo at the bottom keeps
         # the 2D layout aligned with the gantry's visual motion.
         range=[y_lo, y_hi],
-        gridcolor=GRID_COLOR, zeroline=False,
-        title=dict(text="y  (world m)", font=dict(color=TEXT_DIM, size=11)),
-        tickfont=dict(color=TEXT_DIM, size=9),
+        gridcolor=pal["grid"], zeroline=False,
+        title=dict(text="y  (world m)", font=dict(color=pal["text_dim"], size=11)),
+        tickfont=dict(color=pal["text_dim"], size=9),
         scaleanchor="x", scaleratio=1,
     )
 
     fig.update_layout(
-        **PLOT_LAYOUT_BASE,
+        **plot_layout_base(theme),
         height=320,
         showlegend=True,
         legend=dict(
             x=1, y=0, xanchor="right", yanchor="bottom",
-            bgcolor="rgba(30,36,46,0.85)", bordercolor=GRID_COLOR, borderwidth=1,
-            font=dict(color=TEXT, size=10),
+            bgcolor=pal["legend_bg"], bordercolor=pal["grid"], borderwidth=1,
+            font=dict(color=pal["text"], size=10),
         ),
         annotations=[
             dict(
                 xref="paper", yref="paper", x=0.02, y=0.98,
                 xanchor="left", yanchor="top",
                 text=f"err  <b>{pred.err_m * 100:0.1f}</b>  cm",
-                showarrow=False, font=dict(color=TEXT, size=12),
-                bgcolor=PANEL_LIGHT, bordercolor=GRID_COLOR, borderwidth=1,
+                showarrow=False, font=dict(color=pal["text"], size=12),
+                bgcolor=pal["panel_alt"], bordercolor=pal["grid"], borderwidth=1,
                 borderpad=6,
             ),
         ],
@@ -340,43 +387,44 @@ def fig_location(pred) -> go.Figure:
     return fig
 
 
-def fig_topk_classes(pred, k: int = 5) -> go.Figure:
+def fig_topk_classes(pred, k: int = 5, theme: str | None = None) -> go.Figure:
+    pal = palette(theme)
     order = np.argsort(pred.object_probs)[::-1][:k]
     labels = [pretty_obj(pred.object_classes[i]) for i in order]
     probs = [float(pred.object_probs[i]) for i in order]
-    colors = [GT_COLOR if i == pred.object_gt_idx else ACCENT_DIM for i in order]
+    colors = [pal["gt"] if i == pred.object_gt_idx else pal["accent_dim"] for i in order]
 
     fig = go.Figure(go.Bar(
         x=probs, y=labels, orientation="h",
         marker=dict(color=colors, line=dict(width=0)),
         text=[f"{p:.2f}" for p in probs],
         textposition="outside",
-        textfont=dict(color=TEXT_DIM, size=11),
+        textfont=dict(color=pal["text_dim"], size=11),
         hovertemplate="%{y}<br>p=%{x:.3f}<extra></extra>",
     ))
     fig.update_xaxes(
         range=[0, max(0.65, max(probs) * 1.18)],
-        gridcolor=GRID_COLOR, zeroline=False,
-        title=dict(text="probability", font=dict(color=TEXT_DIM, size=11)),
-        tickfont=dict(color=TEXT_DIM, size=9),
+        gridcolor=pal["grid"], zeroline=False,
+        title=dict(text="probability", font=dict(color=pal["text_dim"], size=11)),
+        tickfont=dict(color=pal["text_dim"], size=9),
     )
     fig.update_yaxes(
         autorange="reversed",
         showgrid=False, zeroline=False,
-        tickfont=dict(color=TEXT, size=11),
+        tickfont=dict(color=pal["text"], size=11),
     )
     # GT badge
     if pred.object_gt_idx in order:
         badge = "GT in top-5  ✓"
-        col = GT_COLOR
+        col = pal["gt"]
     elif pred.object_gt_idx >= 0:
         rank = int((pred.object_probs > pred.object_probs[pred.object_gt_idx]).sum() + 1)
         badge = f"GT @ rank {rank}"
-        col = PRED_COLOR
+        col = pal["pred"]
     else:
         badge = ""
-        col = TEXT_DIM
-    layout = {**PLOT_LAYOUT_BASE,
+        col = pal["text_dim"]
+    layout = {**plot_layout_base(theme),
               "height": 320,
               "margin": dict(l=88, r=24, t=20, b=36),
               "annotations": [
@@ -391,9 +439,10 @@ def fig_topk_classes(pred, k: int = 5) -> go.Figure:
     return fig
 
 
-def fig_size(pred) -> go.Figure:
+def fig_size(pred, theme: str | None = None) -> go.Figure:
+    pal = palette(theme)
     labels = [s.replace("inch", '"') for s in pred.size_classes]
-    colors = [GT_COLOR if i == pred.size_gt_idx else ACCENT_DIM
+    colors = [pal["gt"] if i == pred.size_gt_idx else pal["accent_dim"]
               for i in range(len(pred.size_classes))]
 
     fig = go.Figure(go.Bar(
@@ -401,16 +450,16 @@ def fig_size(pred) -> go.Figure:
         marker=dict(color=colors, line=dict(width=0)),
         text=[f"{p:.2f}" for p in pred.size_probs],
         textposition="outside",
-        textfont=dict(color=TEXT_DIM, size=11),
+        textfont=dict(color=pal["text_dim"], size=11),
         width=0.55,
         hovertemplate="%{x}<br>p=%{y:.3f}<extra></extra>",
     ))
     fig.update_xaxes(showgrid=False, zeroline=False,
-                     tickfont=dict(color=TEXT, size=12))
-    fig.update_yaxes(range=[0, 1.1], gridcolor=GRID_COLOR, zeroline=False,
-                     title=dict(text="probability", font=dict(color=TEXT_DIM, size=11)),
-                     tickfont=dict(color=TEXT_DIM, size=9))
-    fig.update_layout(**PLOT_LAYOUT_BASE, height=320)
+                     tickfont=dict(color=pal["text"], size=12))
+    fig.update_yaxes(range=[0, 1.1], gridcolor=pal["grid"], zeroline=False,
+                     title=dict(text="probability", font=dict(color=pal["text_dim"], size=11)),
+                     tickfont=dict(color=pal["text_dim"], size=9))
+    fig.update_layout(**plot_layout_base(theme), height=320)
     return fig
 
 
@@ -425,73 +474,134 @@ app = Dash(
     suppress_callback_exceptions=True,
 )
 
-# Inline base CSS — keeps the GUI self-contained (no external CSS needed).
-INLINE_CSS = f"""
-html, body {{
-    background: {BG};
-    color: {TEXT};
+def _vars_block(theme_name: str) -> str:
+    pal = PALETTES[theme_name]
+    return f""":root[data-theme="{theme_name}"] {{
+    --bg:            {pal["bg"]};
+    --panel:         {pal["panel"]};
+    --panel-alt:     {pal["panel_alt"]};
+    --accent:        {pal["accent"]};
+    --accent-dim:    {pal["accent_dim"]};
+    --gt:            {pal["gt"]};
+    --pred:          {pal["pred"]};
+    --text:          {pal["text"]};
+    --text-dim:      {pal["text_dim"]};
+    --grid:          {pal["grid"]};
+    --info-bg:       {pal["info_bg"]};
+    --info-border:   {pal["info_border"]};
+    --scene-img-bg:  {pal["scene_img_bg"]};
+    --shadow:        {pal["shadow"]};
+}}"""
+
+
+# Inline base CSS — keeps the GUI self-contained (no external CSS needed). All
+# colors come from CSS custom properties on :root[data-theme=...] so a single
+# attribute swap re-themes the whole UI without re-rendering Dash components.
+INLINE_CSS = "\n".join(_vars_block(name) for name in PALETTES) + """
+
+html, body {
+    background: var(--bg);
+    color: var(--text);
     margin: 0;
     font-family: ui-sans-serif, -apple-system, "SF Pro", Inter, "Segoe UI", system-ui;
     -webkit-font-smoothing: antialiased;
-}}
-.container {{
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+.container {
     padding: 18px 22px 24px;
     max-width: 1480px;
     margin: 0 auto;
-}}
-.header {{
-    display: flex; align-items: baseline; gap: 14px;
+}
+.header {
+    display: flex; align-items: center; gap: 14px;
     padding-bottom: 14px;
-}}
-.h1 {{ font-size: 22px; font-weight: 700; letter-spacing: 0.02em; }}
-.subtitle {{ color: {TEXT_DIM}; font-size: 13px; }}
-.scene-id {{ margin-left: auto; color: {ACCENT}; font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 12px; }}
-.row {{ display: flex; gap: 14px; }}
-.col {{ display: flex; flex-direction: column; gap: 14px; }}
-.card {{
-    background: {PANEL};
-    border: 1px solid {GRID_COLOR};
+}
+.h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.02em; }
+.subtitle { color: var(--text-dim); font-size: 13px; }
+.header-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 12px;
+}
+.scene-id {
+    color: var(--accent);
+    font-family: ui-monospace, SF Mono, Menlo, monospace;
+    font-size: 12px;
+}
+/* Theme toggle */
+.theme-toggle {
+    background: var(--panel);
+    color: var(--text-dim);
+    border: 1px solid var(--grid);
+    border-radius: 999px;
+    padding: 4px 4px;
+    display: inline-flex; align-items: center; gap: 2px;
+    cursor: pointer;
+    font-size: 12px;
+    box-shadow: var(--shadow);
+    transition: all 0.15s ease;
+}
+.theme-toggle:hover { border-color: var(--accent-dim); }
+.theme-toggle .opt {
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: var(--text-dim);
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+.theme-toggle .opt.active {
+    background: var(--accent);
+    color: #ffffff;
+}
+:root[data-theme="dark"] .theme-toggle .opt.active { color: #0e1116; }
+.row { display: flex; gap: 14px; }
+.col { display: flex; flex-direction: column; gap: 14px; }
+.card {
+    background: var(--panel);
+    border: 1px solid var(--grid);
     border-radius: 10px;
     padding: 14px 16px;
-}}
-.card-title {{
-    color: {TEXT_DIM};
+    box-shadow: var(--shadow);
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.card-title {
+    color: var(--text-dim);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.10em;
     text-transform: uppercase;
     margin: 0 0 10px 0;
-}}
-.scene-img {{
+}
+.scene-img {
     width: 100%; height: auto; display: block; border-radius: 6px;
-    background: #000;
-}}
-.legend {{ display: flex; gap: 18px; align-items: center; padding-top: 8px; color: {TEXT_DIM}; font-size: 12px; }}
-.legend .dot {{ width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }}
-.frame-tag {{ margin-left: auto; color: {ACCENT}; font-family: ui-monospace, monospace; font-size: 12px; }}
-.controls {{ display: grid; grid-template-columns: 70px 1fr; row-gap: 10px; column-gap: 10px; align-items: center; }}
-.controls label {{ color: {TEXT_DIM}; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }}
-.btn-row {{ display: flex; gap: 6px; }}
-.btn {{
-    background: {PANEL_LIGHT};
-    color: {TEXT};
-    border: 1px solid {GRID_COLOR};
+    background: var(--scene-img-bg);
+}
+.legend { display: flex; gap: 18px; align-items: center; padding-top: 8px; color: var(--text-dim); font-size: 12px; }
+.legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.frame-tag { margin-left: auto; color: var(--accent); font-family: ui-monospace, monospace; font-size: 12px; }
+.controls { display: grid; grid-template-columns: 70px 1fr; row-gap: 10px; column-gap: 10px; align-items: center; }
+.controls label { color: var(--text-dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.btn-row { display: flex; gap: 6px; }
+.btn {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--grid);
     border-radius: 6px;
     padding: 6px 12px;
     font-size: 12px;
     cursor: pointer;
     transition: all 0.12s ease;
-}}
-.btn:hover:not(:disabled) {{ border-color: {ACCENT_DIM}; color: {ACCENT}; }}
-.btn.active {{ background: {ACCENT_DIM}; border-color: {ACCENT}; color: {TEXT}; }}
-.btn:disabled {{ opacity: 0.35; cursor: not-allowed; }}
-.frame-nav {{ display: flex; align-items: center; gap: 8px; }}
-.frame-nav .btn {{ padding: 4px 10px; min-width: 32px; }}
-.frame-nav .frame-label {{ font-family: ui-monospace, monospace; font-size: 12px; color: {ACCENT}; min-width: 80px; }}
-.num-input {{
-    background: {PANEL_LIGHT};
-    color: {TEXT};
-    border: 1px solid {GRID_COLOR};
+}
+.btn:hover:not(:disabled) { border-color: var(--accent-dim); color: var(--accent); }
+.btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+:root[data-theme="light"] .btn.active { background: var(--accent); color: #ffffff; border-color: var(--accent); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.frame-nav { display: flex; align-items: center; gap: 8px; }
+.frame-nav .btn { padding: 4px 10px; min-width: 32px; }
+.frame-nav .frame-label { font-family: ui-monospace, monospace; font-size: 12px; color: var(--accent); min-width: 80px; }
+.num-input {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--grid);
     border-radius: 6px;
     padding: 5px 8px;
     font-size: 13px;
@@ -499,48 +609,48 @@ html, body {{
     width: 86px;
     text-align: right;
     -moz-appearance: textfield;
-}}
-.num-input:focus {{ outline: none; border-color: {ACCENT}; }}
-.num-input::-webkit-inner-spin-button, .num-input::-webkit-outer-spin-button {{
+}
+.num-input:focus { outline: none; border-color: var(--accent); }
+.num-input::-webkit-inner-spin-button, .num-input::-webkit-outer-spin-button {
     opacity: 1; height: 22px;
-}}
-.frame-nav .num-input {{ width: 64px; }}
-.frame-nav .frame-suffix {{ color: {TEXT_DIM}; font-family: ui-monospace, monospace; font-size: 12px; }}
-.ymax-row {{ display: flex; align-items: center; gap: 10px; padding-top: 6px; }}
-.ymax-row label {{ color: {TEXT_DIM}; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }}
-.ymax-row .hint {{ color: {TEXT_DIM}; font-size: 11px; margin-left: auto; }}
-.info {{
-    background: rgba(92, 200, 255, 0.06);
-    border: 1px solid rgba(92, 200, 255, 0.30);
+}
+.frame-nav .num-input { width: 64px; }
+.frame-nav .frame-suffix { color: var(--text-dim); font-family: ui-monospace, monospace; font-size: 12px; }
+.ymax-row { display: flex; align-items: center; gap: 10px; padding-top: 6px; }
+.ymax-row label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.ymax-row .hint { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+.info {
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
     border-radius: 6px;
     padding: 6px 10px;
-    color: {ACCENT};
+    color: var(--accent);
     font-size: 11px;
     margin-bottom: 12px;
     letter-spacing: 0.02em;
-}}
+}
 /* Style the dropdown */
 .Select-control, .Select-menu-outer, .Select-value, .Select-input,
-.dash-dropdown .Select-control {{
-    background-color: {PANEL_LIGHT} !important;
-    color: {TEXT} !important;
-    border-color: {GRID_COLOR} !important;
-}}
-.Select-value-label, .Select-placeholder {{ color: {TEXT} !important; }}
-.Select-menu-outer {{ border-color: {GRID_COLOR} !important; }}
-.Select-option {{ background-color: {PANEL_LIGHT} !important; color: {TEXT} !important; }}
-.Select-option.is-focused {{ background-color: {ACCENT_DIM} !important; }}
+.dash-dropdown .Select-control {
+    background-color: var(--panel-alt) !important;
+    color: var(--text) !important;
+    border-color: var(--grid) !important;
+}
+.Select-value-label, .Select-placeholder { color: var(--text) !important; }
+.Select-menu-outer { border-color: var(--grid) !important; }
+.Select-option { background-color: var(--panel-alt) !important; color: var(--text) !important; }
+.Select-option.is-focused { background-color: var(--accent-dim) !important; color: var(--text) !important; }
 /* Slider */
-.rc-slider-track {{ background-color: {ACCENT_DIM} !important; }}
-.rc-slider-rail {{ background-color: {GRID_COLOR} !important; }}
-.rc-slider-handle {{ border-color: {ACCENT} !important; background: {ACCENT} !important; }}
-.rc-slider-dot {{ display: none; }}
-.rc-slider-mark-text {{ color: {TEXT_DIM} !important; font-size: 10px !important; }}
+.rc-slider-track { background-color: var(--accent-dim) !important; }
+.rc-slider-rail { background-color: var(--grid) !important; }
+.rc-slider-handle { border-color: var(--accent) !important; background: var(--accent) !important; }
+.rc-slider-dot { display: none; }
+.rc-slider-mark-text { color: var(--text-dim) !important; font-size: 10px !important; }
 """
 
 app.index_string = f"""
 <!DOCTYPE html>
-<html>
+<html data-theme="{DEFAULT_THEME}">
 <head>
     {{%metas%}}
     <title>{{%title%}}</title>
@@ -572,17 +682,37 @@ def _btn(label, btn_id, active=False, disabled=False):
 initial_state = dict(obj="8", size="8inch", light="lighton", frame=50, y_max=8000)
 
 
+def _theme_toggle(theme: str) -> html.Div:
+    """A simple two-segment pill toggle for light/dark."""
+    light_cls = "opt active" if theme == "light" else "opt"
+    dark_cls = "opt active" if theme == "dark" else "opt"
+    return html.Div(
+        id="theme-toggle",
+        className="theme-toggle",
+        n_clicks=0,
+        title="Toggle light / dark theme",
+        children=[
+            html.Span("Light", className=light_cls, id="theme-toggle-light"),
+            html.Span("Dark",  className=dark_cls,  id="theme-toggle-dark"),
+        ],
+    )
+
+
 def serve_layout():
     return html.Div(className="container", children=[
         # ---- Stores ---- #
         dcc.Store(id="state-store", data=initial_state),
+        dcc.Store(id="theme-store", data=DEFAULT_THEME),
 
         # ---- Header ---- #
         html.Div(className="header", children=[
             html.Div("DENALI", className="h1"),
             html.Div("Non-line-of-sight tracking · 3×3 SPAD GUI",
                      className="subtitle"),
-            html.Div(id="scene-id", className="scene-id"),
+            html.Div(className="header-right", children=[
+                html.Div(id="scene-id", className="scene-id"),
+                _theme_toggle(DEFAULT_THEME),
+            ]),
         ]),
         html.Div(
             "Predictions are run live by the 1D-CNN heads in "
@@ -601,10 +731,10 @@ def serve_layout():
                 html.Img(id="tracking-img", className="scene-img", src=""),
                 html.Div(className="legend", children=[
                     html.Span([html.Span(className="dot",
-                                         style={"background": GT_COLOR}),
+                                         style={"background": "var(--gt)"}),
                                "Ground truth"]),
                     html.Span([html.Span(className="dot",
-                                         style={"background": PRED_COLOR}),
+                                         style={"background": "var(--pred)"}),
                                "Prediction"]),
                     html.Div(id="frame-tag", className="frame-tag"),
                 ]),
@@ -835,8 +965,9 @@ def update_state(obj_val, _s4, _s8, _loff, _lon, _prev, _nxt, frame_val, ymax_va
     Output("cls-fig", "figure"),
     Output("size-fig", "figure"),
     Input("state-store", "data"),
+    Input("theme-store", "data"),
 )
-def render_all(state):
+def render_all(state, theme):
     obj = state["obj"]
     size = state["size"]
     light = state["light"]
@@ -845,7 +976,7 @@ def render_all(state):
 
     sid = scene_id_for(obj, size, light)
     if sid is None:
-        empty = go.Figure(layout=PLOT_LAYOUT_BASE)
+        empty = go.Figure(layout=plot_layout_base(theme))
         return "", "· no data for this combination", "", empty, empty, empty, empty
 
     img_src = f"/scene/{sid}/{frame}.jpg"
@@ -862,11 +993,51 @@ def render_all(state):
 
     return (
         img_src, scene_id_text, frame_tag_text,
-        fig_histograms(hist, y_max),
-        fig_location(pred),
-        fig_topk_classes(pred),
-        fig_size(pred),
+        fig_histograms(hist, y_max, theme=theme),
+        fig_location(pred, theme=theme),
+        fig_topk_classes(pred, theme=theme),
+        fig_size(pred, theme=theme),
     )
+
+
+# --- Theme toggle ---------------------------------------------------------- #
+
+@app.callback(
+    Output("theme-store", "data"),
+    Output("theme-toggle-light", "className"),
+    Output("theme-toggle-dark", "className"),
+    Input("theme-toggle", "n_clicks"),
+    State("theme-store", "data"),
+    prevent_initial_call=False,
+)
+def toggle_theme(n_clicks, current):
+    """Flip between light and dark on each toggle click."""
+    current = current or DEFAULT_THEME
+    if not n_clicks:                                    # first paint, no flip
+        new_theme = current
+    else:
+        new_theme = "dark" if current == "light" else "light"
+    light_cls = "opt active" if new_theme == "light" else "opt"
+    dark_cls = "opt active" if new_theme == "dark" else "opt"
+    return new_theme, light_cls, dark_cls
+
+
+# Clientside: push the chosen theme onto <html data-theme> so the CSS
+# variables under :root[data-theme=...] take effect immediately, without
+# needing any Dash component to re-render.
+app.clientside_callback(
+    """
+    function(theme) {
+        if (theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("theme-store", "data", allow_duplicate=True),
+    Input("theme-store", "data"),
+    prevent_initial_call="initial_duplicate",
+)
 
 
 # --------------------------------------------------------------------------- #
